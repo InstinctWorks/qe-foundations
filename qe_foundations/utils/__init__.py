@@ -4,6 +4,7 @@ from qe_foundations.utils.strings import (
     normalize_whitespace,
     slugify,
     is_valid_email,
+    mask_email,
 )
 
 from qe_foundations.utils.numbers import (
@@ -16,6 +17,7 @@ from qe_foundations.utils.dates import (
     add_days,
     is_weekend,
     timestamp_for_filename,
+    days_between,
 )
 
 from qe_foundations.utils.data_gen import (
@@ -37,4 +39,7 @@ __all__ = [
     "FIRST_NAMES",
     "ROLES",
     "make_users",
+
+    "mask_email",
+    "days_between",
 ]

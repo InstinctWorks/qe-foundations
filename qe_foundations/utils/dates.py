@@ -16,3 +16,9 @@ def timestamp_for_filename(moment=None):
     """'20250131_093000' - safe to use inside file and folder names."""
     moment = moment or datetime.now()
     return moment.strftime("%Y%m%d_%H%M%S")
+
+
+# New Functions
+def days_between(start, end):
+    """Return the number of whole days from start to end."""
+    return (end - start).days
