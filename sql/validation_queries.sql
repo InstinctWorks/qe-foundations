@@ -82,39 +82,48 @@ OR status != TRIM(status);
 -- TODO: the LIKE pattern _ matches exactly one character; these timestamps are 19 characters long.
 SELECT run_id
 FROM test_runs
-WHERE 1 = 0;
+WHERE started_at is null or started_at NOT LIKE '%____-__-__ __:__:__%'
+    or finished_at is null or finished_at NOT LIKE '%____-__-__ __:__:__%';
 
 -- @rule R-10 | Consistency | a run cannot finish before it starts, and cannot start in the future
 -- TODO: ISO-format text sorts in time order, so < works on it. date('now') is today.
 SELECT run_id
 FROM test_runs
-WHERE 1 = 0;
+WHERE finished_at < started_at 
+    or started_at > date('now')
+    or finished_at > date('now');
 
 -- @rule R-11 | Consistency | FAILED/ERROR runs need a failure_message; PASSED runs must not have one
--- TODO: two sub-rules joined with OR; use parentheses so AND/OR bind the way you mean.
 SELECT run_id
 FROM test_runs
-WHERE 1 = 0;
+WHERE (status in ('FAILED', 'ERROR') AND (failure_message IS NULL OR failure_message = ''))
+    OR (status = 'PASSED' AND failure_message IS NOT NULL AND failure_message <> '');
 
 -- @rule R-12 | Validity | build_id must be present and look like B-1042 (upper-case 'B', dash, 4 characters)
 -- TODO: careful: LIKE ignores letter case in SQLite -- which function would expose 'b-1044'?
 SELECT run_id
 FROM test_runs
-WHERE 1 = 0;
+WHERE build_id is null or build_id NOT LIKE'B-____'
+    or build_id != upper(build_id);
 
 -- @rule E-01 | Expectation | run 5001 was saved as expected (test_login_valid_user, SMOKE, QA, PASSED, build B-1042)
 -- @expect 1
 -- TODO: expectation query: name EVERY value you expect; the rule passes when exactly 1 row comes back.
 SELECT run_id
 FROM test_runs
-WHERE 1 = 0;
+WHERE run_id = '5001' and test_name = "test_login_valid_user"
+    and suite = 'SMOKE'
+    and environment = 'QA'
+    and status = 'PASSED'
+    and build_id LIKE 'B-1042';
 
 -- @rule E-02 | Expectation | test-data discovery: the most recent FAILED run in QA exists (exactly one row returned)
 -- @expect 1
 -- TODO: test-data discovery: filter, ORDER BY ... DESC, then keep only the first row.
 SELECT run_id
 FROM test_runs
-WHERE 1 = 0;
+WHERE status in ('FAILED') and environment in ('QA')
+    order by finished_at DESC LIMIT 1;
 
 -- ---------------------------- STRETCH (bonus) --------------------------------
 -- Add these only when R-01..R-12, E-01 and E-02 are done and checked. Use "@expect any"
