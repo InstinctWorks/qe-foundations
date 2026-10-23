@@ -202,45 +202,45 @@ def run_all(conn: sqlite3.Connection, rules: List[Rule], logger: logging.Logger)
     results = []
 
     for rule in rules:
+        logger.debug("Running %s query: %s", rule.rule_id, rule.sql)
         try:
             rows = run_rule(conn, rule)
 
             if rule.expect is None:
                 status = "INFO"
-                message = (f"INFO {rule.rule_id} {rule.dimension}  " f"{rule.description} ({len(rows)} row(s)")
+                message = (f"INFO {rule.rule_id} {rule.dimension}  "
+                           f"{rule.description} ({len(rows)} row(s))")
             else:
                 status = "PASS"
                 message = (f"PASS {rule.rule_id} {rule.dimension}  " f"{rule.description}")
 
-
+            print(message)
             logger.info(message)
-            results.append(message)
+            results.append(RuleResult(rule, status, rows))
 
         except ValidationFailedError as e:
-
             rows = e.rows
-
-            message = (f"FAIL  {rule.rule_id}  {rule.dimension}  "f"{rule.description}  ({len(rows)} violating row(s))")
-
+            message = (f"FAIL  {rule.rule_id}  {rule.dimension}  "
+                       f"{rule.description}  ({len(rows)} violating row(s))")
+            print(message)
             logger.warning(message)
 
             for row in rows:
                 print(f"      {row}")
-            
             results.append(RuleResult(rule, "FAIL", rows))
 
         except Exception:
             logger.exception(f"Unexpected error running {rule.rule_id}")
-            raise    
+            raise
 
+    passed = sum(result.status == "PASS" for result in results)
+    failed = sum(result.status == "FAIL" for result in results)
+    info = sum(result.status == "INFO" for result in results)
 
-        passed = sum(result.status == "PASS" for result in results)
-        failed = sum(result.status == "FAIL" for result in results)
-        info = sum(result.status == "INFO" for result in results)
-
-        print(f"Summary: {passed} PASS / {failed} FAIL / {info} INFO")
-
-        return results
+    summary = f"Summary: {passed} PASS / {failed} FAIL / {info} INFO"
+    print(summary)
+    logger.info(summary)
+    return results
 
 
 # ---------------------------------------------------------------- command line (PROVIDED + 1 TODO)
@@ -289,8 +289,9 @@ def main(argv=None) -> int:
     #   2. results = run_all(conn, rules, logger)
     #   3. return 0 if no result has status "FAIL" or args.allow_failures is set,
     #      otherwise return 1   (a non-zero exit code is how CI notices a failure)
-    
-    raise NotImplementedError("not implemented")
+    logger = setup_logging(Path(args.log_file))
+    results = run_all(conn, rules, logger)
+    return 0 if args.allow_failures or all(result.status != "FAIL" for result in results) else 1
 
 
 if __name__ == "__main__":
