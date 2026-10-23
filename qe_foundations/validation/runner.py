@@ -130,7 +130,32 @@ def setup_logging(log_file: Path = DEFAULT_LOG_FILE) -> logging.Logger:
         "duplicate log lines" pitfall)
     Hint: Wednesday demo file demos/3-wednesday/code/qa_logging.py.
     """
-    raise NotImplementedError("TODO: implement setup_logging")
+
+
+def setup_logging(log_file: Path = DEFAULT_LOG_FILE) -> logging.Logger:
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.DEBUG)
+
+    if logger.handlers:
+        return logger
+
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+
+    return logger
+
 
 
 # ---------------------------------------------------------------- TODO 2: run one rule
@@ -142,7 +167,13 @@ def run_rule(conn: sqlite3.Connection, rule: Rule) -> list:
       * if len(rows) == rule.expect -> the rule holds: return the rows
       * otherwise -> raise ValidationFailedError(rule, rows)   (see exceptions.py)
     """
-    raise NotImplementedError("TODO: implement run_rule")
+
+    _, rows = fetch_rows(conn, rule.sql)
+
+    if rule.expect is None or len(rows) == rule.expect:
+        return rows
+    
+    raise ValidationFailedError(rule, rows)
 
 
 # ---------------------------------------------------------------- TODO 3: run the whole suite
@@ -167,7 +198,49 @@ def run_all(conn: sqlite3.Connection, rules: List[Rule], logger: logging.Logger)
       * finish with a one-line summary: how many PASS / FAIL / INFO
     Return a list with one RuleResult per rule, in file order.
     """
-    raise NotImplementedError("TODO: implement run_all")
+
+    results = []
+
+    for rule in rules:
+        try:
+            rows = run_rule(conn, rule)
+
+            if rule.expect is None:
+                status = "INFO"
+                message = (f"INFO {rule.rule_id} {rule.dimension}  " f"{rule.description} ({len(rows)} row(s)")
+            else:
+                status = "PASS"
+                message = (f"PASS {rule.rule_id} {rule.dimension}  " f"{rule.description}")
+
+
+            logger.info(message)
+            results.append(message)
+
+        except ValidationFailedError as e:
+
+            rows = e.rows
+
+            message = (f"FAIL  {rule.rule_id}  {rule.dimension}  "f"{rule.description}  ({len(rows)} violating row(s))")
+
+            logger.warning(message)
+
+            for row in rows:
+                print(f"      {row}")
+            
+            results.append(RuleResult(rule, "FAIL", rows))
+
+        except Exception:
+            logger.exception(f"Unexpected error running {rule.rule_id}")
+            raise    
+
+
+        passed = sum(result.status == "PASS" for result in results)
+        failed = sum(result.status == "FAIL" for result in results)
+        info = sum(result.status == "INFO" for result in results)
+
+        print(f"Summary: {passed} PASS / {failed} FAIL / {info} INFO")
+
+        return results
 
 
 # ---------------------------------------------------------------- command line (PROVIDED + 1 TODO)
@@ -216,7 +289,8 @@ def main(argv=None) -> int:
     #   2. results = run_all(conn, rules, logger)
     #   3. return 0 if no result has status "FAIL" or args.allow_failures is set,
     #      otherwise return 1   (a non-zero exit code is how CI notices a failure)
-    raise NotImplementedError("TODO: wire up setup_logging, run_all and the exit code")
+    
+    raise NotImplementedError("not implemented")
 
 
 if __name__ == "__main__":
