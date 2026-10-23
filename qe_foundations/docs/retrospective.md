@@ -18,7 +18,7 @@ George George
 Repo: qe-foundations (Owner: Antoine)
 Branch: feature/sql-validation-antoine-george
 
-Final Commit Hash:
+Final Commit Hash: deaa72e55ff4a1f7d9eab7ce90c5608be1303402
 
 ## What we built
 
@@ -47,8 +47,7 @@ Fixed Version: "%____-__-__ __-__-__%"
 ## A surprise in the data
 
 <!-- Which defect did you NOT expect, or which "defect" turned out to be a legitimate row (a false alarm you avoided or briefly fell for)? What would you ask the product owner about it? -->
-
-
+We were surprised that run 5012 was marked PASSED but had a slow-response warning in `failure_message`; we would ask the product owner whether warnings belong in that field or should be stored separately.
 
 ## SQLite and SQL pitfalls we hit
 
